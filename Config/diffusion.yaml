@@ -1,0 +1,96 @@
+data:
+  config: #config for data
+    sample_rate: &sample_rate 44100
+  config_per_dataset_dict:
+    dataset_name:
+      preprocessor_class_meta_list: 
+        - { 'name': 'Preprocessor', 'args': {}}
+#####################################################################################################
+pytorch_data:
+  class_meta: { 'name' : 'PytorchDataLoader', 'args' : {}}
+  dataloader:
+    train:
+      batch_size: 16
+      num_workers: 15
+      dataset: 
+        class_meta: { 'name' : 'DataSet', 'args' : {}}
+      batch_sampler:
+        class_meta: { 'name' : '', 'args' : {}}
+      shuffle: True
+      collate_fn: True
+      pin_memory: True
+      drop_last: True
+    valid:
+      batch_size: 16
+      num_workers: 15
+      dataset: 
+        class_meta: { 'name' : 'DataSet', 'args' : {}}
+      shuffle: False
+      drop_last: True
+#####################################################################################################
+model:
+  class_name: ''
+  class_meta_dict:
+    model_class_name: {}
+#####################################################################################################
+train:
+  #total_epoch: 100000
+  #total_step: 100000
+  class_meta:
+    name: 'Trainer'
+    args: {}
+      #model_ckpt_path: 'step.pth'
+      #use_ema: False
+
+  log_writer_class_name: 'LogWriter'
+
+  optimizer: 
+    class_meta: 
+      name : 'AdamW'
+      args :
+        lr: 0.0008
+        betas: [0.9,0.98]
+        weight_decay: 0.0
+    #name1:
+    #  name: AdamW
+    #  args: {'lr': 0.00005, betas: [0.8, 0.99]}
+    #  model_name_list: ['model_name1', 'model_name2'...]
+    #name2:
+    #  name: AdamW
+    #  args: {'lr': 0.0001, betas: [0.8, 0.99]}
+    #  model_name_list: ['model_name1', 'model_name2'...]
+
+  scheduler:
+    class_meta: 
+      name: "StepLR"
+      args:
+        step_size: 20000
+        gamma: 0.5
+        
+    interval: 'step' #epoch
+    frequency: 1
+
+  loss_control:
+    class_meta: { 'name' : 'LossControl', 'args' : {}}
+
+  loss_dict:
+    mel_l1_loss :
+      class_meta: { 'name' : 'L1Loss', 'args' : {}}
+      pred_name: ''
+      target_name: ''
+      weight: 1
+    
+  loss_list_for_performance_comparison: 
+    - loss_name
+#####################################################################################################
+inference:
+  class_meta:
+    name: 'Inferencer'
+    args: {}
+  #ckpt_name: 'step15000.pth'
+#####################################################################################################
+evaluate:
+  class_meta:
+    name: 'Evaluater'
+    args: 
+      source_dir: ''
