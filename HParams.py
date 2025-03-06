@@ -18,10 +18,11 @@ class Mode:
     train:str = ["start","resume"][0]
     resume_path:str = f"{LOG_DIR}/{config_name}"
     debug_mode:bool = False
+    use_torch_compile:bool = False
 
 @dataclass
 class Resource:
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:7' if torch.cuda.is_available() else 'cpu')
     multi_gpu = False
     preprocess = {'num_workers': 20}
 
@@ -35,10 +36,10 @@ class Data:
 @dataclass
 class Logging():
     class_root_dir:str = LOG_DIR
-    project_name:str = "ldm_enhance"
+    project_name:str = "inst_flow"
     visualizer_type = ["tensorboard","wandb"][0]
     use_currenttime_on_experiment_name:bool = False
-    log_every_local_step:int = 40
+    log_step_interval:int = 40
 
 @dataclass
 class PytorchData:
@@ -55,8 +56,8 @@ class Train:
     class_meta = { 'name' : 'Trainer', 'args' : {}}
     seed_strict = False
     seed = (int)(torch.cuda.initial_seed() / (2**32))
-    save_model_after_epoch:int = 200
-    save_model_every_epoch:int = 100
+    save_model_step_interval:int = 10000
+    save_model_epoch_interval:int = 100
     check_evalstep_first:bool = True
 
 @dataclass

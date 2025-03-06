@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from Model.StableAudioOpen.Oobleck import OobleckEncoder, OobleckDecoder
-from Model.StableAudioOpen.VAEBottleneck import VAEBottleneck, Bottleneck
+from Model.StableAudioOpen.AutoencoderModule import OobleckEncoder, OobleckDecoder
+from Model.StableAudioOpen.AutoencoderModule import VAEBottleneck, Bottleneck
 
 class AudioAutoencoder(nn.Module):
     def __init__(

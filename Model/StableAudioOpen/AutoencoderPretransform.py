@@ -1,6 +1,3 @@
-from TorchJaekwon.Util import Util
-Util.set_sys_path_to_parent_dir(__file__,2)
-
 import torch
 import torch.nn as nn
 
@@ -101,6 +98,7 @@ class AutoencoderPretransform(Pretransform):
         self.model.load_state_dict(state_dict, strict=strict)
 
 if __name__ == '__main__':
+    from TorchJaekwon.Util import Util
     from TorchJaekwon.Util import UtilAudio
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
