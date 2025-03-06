@@ -7,7 +7,7 @@ from TorchJaekwon.Util import UtilTorch
 class MedleySoloTrainer(Trainer):
     def run_step(self,data,metric,train_state:TrainState):
         data = data.to(self.device)
-        loss = self.model( x = data , is_cond_unpack = True)
+        loss = self.model( data , is_cond_unpack = True)
         metric = self.update_metric(metric, {'loss': loss}, data.shape[0])
         return loss, metric
     

@@ -1,0 +1,105 @@
+data:
+  config: #config for data
+    sample_rate: &sample_rate 44100
+  config_per_dataset_dict:
+    dataset_name:
+      preprocessor_class_meta_list: 
+        - { 'name': 'Preprocessor', 'args': {}}
+#####################################################################################################
+pytorch_data:
+  class_meta:
+    name : 'PytorchDataLoader'
+    args : {}
+  dataloader:
+    train:
+      batch_size: 16
+      num_workers: 15
+      dataset: 
+        class_meta:
+          name: 'MedleySoloSet'
+          args : {'subset_type': 'train'}
+      #batch_sampler:
+      #  class_meta: { 'name' : '', 'args' : {}}
+      shuffle: True
+      #collate_fn: True
+      pin_memory: True
+      drop_last: True
+    valid:
+      batch_size: 16
+      num_workers: 15
+      dataset: 
+        class_meta:
+          name: 'MedleySoloSet'
+          args : {'subset_type': 'valid'}
+      shuffle: False
+      drop_last: True
+#####################################################################################################
+model:
+  class_name: 'InstFlow'
+  class_meta_dict:
+    InstFlow:
+      model_class_name: 'DiffusionTransformer'
+      timestep_sampler: 'logit_normal'
+#####################################################################################################
+train:
+  #total_epoch: 100000
+  #total_step: 100000
+  class_meta:
+    name: 'MedleySoloTrainer'
+    args: {}
+      #model_ckpt_path: 'step.pth'
+      #use_ema: False
+
+  log_writer_class_name: 'LogWriter'
+
+  optimizer: 
+    class_meta: 
+      name : 'AdamW'
+      args:
+        lr: 5e-5
+        betas: [0.9, 0.999]
+        weight_decay: 1.0e-3
+    #name1:
+    #  name: AdamW
+    #  args: {'lr': 0.00005, betas: [0.8, 0.99]}
+    #  model_name_list: ['model_name1', 'model_name2'...]
+    #name2:
+    #  name: AdamW
+    #  args: {'lr': 0.0001, betas: [0.8, 0.99]}
+    #  model_name_list: ['model_name1', 'model_name2'...]
+
+  scheduler:
+    class_meta:
+      name: "InverseLR"
+      args:
+        inv_gamma: 1000000
+        power: 0.5
+        warmup: 0.99
+        
+    interval: 'step' #epoch
+    frequency: 1
+
+  loss_control:
+    class_meta: { 'name' : 'LossControl', 'args' : {}}
+
+  loss_dict:
+    mel_l1_loss :
+      class_meta: { 'name' : 'L1Loss', 'args' : {}}
+      pred_name: ''
+      target_name: ''
+      weight: 1
+    
+  loss_list_for_performance_comparison: 
+    - loss_name
+#####################################################################################################
+inference:
+  class_meta:
+    name: 'Inferencer'
+    args: {}
+  #ckpt_name: 'step15000.pth'
+#####################################################################################################
+evaluate:
+  class_meta:
+    name: 'Evaluater'
+    args: 
+      source_dir: ''
