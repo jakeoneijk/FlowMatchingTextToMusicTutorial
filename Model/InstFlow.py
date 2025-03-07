@@ -1,8 +1,6 @@
-from TorchJaekwon.Util import Util
-Util.set_sys_path_to_parent_dir(__file__, 1)
-
-from typing import Optional, Tuple, Union
+from typing import Any, Iterator, Optional, Tuple, Union
 from torch import Tensor
+from torch.nn.parameter import Parameter
 
 import torch
 
@@ -12,12 +10,31 @@ from TorchJaekwon.Model.FlowMatching.FlowMatching import FlowMatching
 from Model.StableAudioOpen.AutoencoderPretransform import AutoencoderPretransform
 
 class InstFlow(FlowMatching):
-    def __init__(self, **kwargs ) -> None:
+    def __init__(
+        self, 
+        autoencoder_ckpt_path:str = 'CKPT/autoencoder.pth', 
+        **kwargs 
+    ) -> None:
         super().__init__(**kwargs)
         self.autoencoder = AutoencoderPretransform()
+        autoencoder_ckpt = torch.load(autoencoder_ckpt_path, map_location='cpu')
+        self.autoencoder.load_state_dict(autoencoder_ckpt)
+
         self.audio_length:int = 131072
         self.autoencoder_dim:int = 64
         self.autoencoder_downsampling_ratio:int = 2048
+    
+    def parameters(self, recurse: bool = True) -> Iterator[Parameter]:
+        for name, param in self.named_parameters(recurse=recurse):
+            if 'autoencoder' not in name:
+                yield param
+    
+    def load_state_dict( self, state_dict: Any ) -> None:
+        super().load_state_dict(state_dict, strict=False)
+    
+    def state_dict(self) -> dict:
+        state_dict_all = super().state_dict()
+        return {k: v for k, v in state_dict_all.items() if 'autoencoder' not in k}
         
     def preprocess(
         self,
@@ -26,7 +43,8 @@ class InstFlow(FlowMatching):
     ) -> Tuple[Tensor,Tensor]: 
         if x_start is not None:
             x_start = UtilData.fix_length(x_start, self.audio_length)
-            z:Tensor = self.autoencoder.encode(x_start)
+            with torch.no_grad():
+                z:Tensor = self.autoencoder.encode(x_start)
         else:
             z = None
         cond = None
@@ -38,7 +56,8 @@ class InstFlow(FlowMatching):
         x: Tensor, #[batch_size, self.autoencoder_dim, self.audio_length // self.autoencoder_downsampling_ratio]
         additional_data_dict
     ) -> Tensor:
-        pred_audio:Tensor = self.autoencoder.decode(x)
+        with torch.no_grad():
+            pred_audio:Tensor = self.autoencoder.decode(x)
         return pred_audio
     
     def get_x_shape(self, _) -> tuple:

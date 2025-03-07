@@ -10,7 +10,7 @@ class Mode:
     config_name:str = [
         'diffusion', 
         'flow'
-    ][-1]
+    ][0]
     
     config_path:str = f"./{CONFIG_DIR}/{config_name}.yaml"
 
@@ -23,7 +23,7 @@ class Mode:
 
 @dataclass
 class Resource:
-    device = torch.device('cuda:6' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:7' if torch.cuda.is_available() else 'cpu')
     multi_gpu = False
     preprocess = {'num_workers': 20}
 

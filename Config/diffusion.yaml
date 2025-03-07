@@ -39,7 +39,6 @@ model:
   class_meta_dict:
     InstDDPM:
       model_class_name: 'DiffusionTransformer'
-      model_output_type: 'v_prediction'
       timestep_sampler: 'logit_normal'
 #####################################################################################################
 train:
