@@ -10,7 +10,7 @@ class Mode:
     config_name:str = [
         'diffusion', 
         'flow'
-    ][0]
+    ][1]
     
     config_path:str = f"./{CONFIG_DIR}/{config_name}.yaml"
 

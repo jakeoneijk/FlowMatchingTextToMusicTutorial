@@ -1,1 +1,2 @@
 einops==0.8.0
+laion-clap

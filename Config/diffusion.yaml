@@ -40,6 +40,11 @@ model:
     InstDDPM:
       model_class_name: 'DiffusionTransformer'
       timestep_sampler: 'logit_normal'
+      unconditional_prob: 0.1
+      cfg_scale: 3.5
+      sample_rate: *sample_rate
+    DiffusionTransformer:
+      global_cond_dim: 384
 #####################################################################################################
 train:
   #total_epoch: 100000
