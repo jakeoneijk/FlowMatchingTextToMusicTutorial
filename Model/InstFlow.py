@@ -13,7 +13,7 @@ class InstFlow(FlowMatching):
     def __init__(
         self, 
         autoencoder_ckpt_path:str = 'CKPT/autoencoder.pth', 
-        clap_ckpt_path:str = 'CKPT/music_speech_audioset_epoch_15_esc_89.98.pt',
+        clap_ckpt_path:str = 'CKPT/music_audioset_epoch_15_esc_90.14.pt',
         sample_rate:int = 44100,
         **kwargs 
     ) -> None:

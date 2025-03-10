@@ -7,14 +7,13 @@ from TorchJaekwon.Util import UtilData, UtilAudio
 from TorchJaekwon.Model.Diffusion.DDPM.EDM import EDM
 
 from Model.StableAudioOpen.AutoencoderPretransform import AutoencoderPretransform
-from Model.StableAudioOpen.CLAP.CLAPTextConditioner import CLAPTextConditioner
-from Model.StableAudioOpen.CLAP.CLAPAudioConditioner import CLAPAudioConditioner
+from Model.StableAudioOpen.CLAP.CLAPConditioner import CLAPConditioner
 
 class InstDDPM(EDM):
     def __init__(
         self, 
         autoencoder_ckpt_path:str = 'CKPT/autoencoder.pth', 
-        clap_ckpt_path:str = 'CKPT/music_speech_audioset_epoch_15_esc_89.98.pt',
+        clap_ckpt_path:str = 'CKPT/music_audioset_epoch_15_esc_90.14.pt',
         sample_rate:int = 44100,
         **kwargs 
     ) -> None:
@@ -29,43 +28,12 @@ class InstDDPM(EDM):
         autoencoder_ckpt = torch.load(autoencoder_ckpt_path, map_location='cpu')
         self.autoencoder.load_state_dict(autoencoder_ckpt)
         # CLAP
-        self.clap_text = CLAPTextConditioner(
-            output_dim=self.model.transformer.dim, 
-            clap_ckpt_path = clap_ckpt_path, 
-            use_text_features = False, 
-            feature_layer_ix = -2)
-        self.clap_audio = CLAPAudioConditioner( output_dim=self.model.transformer.dim, clap_ckpt_path = clap_ckpt_path)
-    
-    def __init__(
-        self, 
-        autoencoder_ckpt_path:str = 'CKPT/autoencoder.pth', 
-        clap_ckpt_path:str = 'CKPT/music_speech_audioset_epoch_15_esc_89.98.pt',
-        sample_rate:int = 44100,
-        **kwargs 
-    ) -> None:
-        super().__init__(**kwargs)
-        self.audio_length:int = 131072
-        self.autoencoder_dim:int = 64
-        self.autoencoder_downsampling_ratio:int = 2048
-        self.sample_rate:int = sample_rate
-        # Autoencoder
-        self.autoencoder: AutoencoderPretransform
-        self.__dict__["autoencoder"] = AutoencoderPretransform()
-        autoencoder_ckpt = torch.load(autoencoder_ckpt_path, map_location='cpu')
-        self.autoencoder.load_state_dict(autoencoder_ckpt)
-        # CLAP
-        self.clap_text = CLAPTextConditioner(
-            output_dim=self.model.transformer.dim, 
-            clap_ckpt_path = clap_ckpt_path, 
-            use_text_features = False, 
-            feature_layer_ix = -2)
-        self.clap_audio = CLAPAudioConditioner( output_dim=self.model.transformer.dim, clap_ckpt_path = clap_ckpt_path)
+        self.clap = CLAPConditioner(output_dim=self.model.transformer.dim, clap_ckpt_path = clap_ckpt_path)
     
     def to(self, device:torch.device) -> None:
         super().to(device)
         self.autoencoder.to(device)
-        self.clap_text.model.to(device)
-        self.clap_audio.model.to(device)
+        self.clap.model.to(device)
         
     def preprocess(
         self,
@@ -80,11 +48,11 @@ class InstDDPM(EDM):
             z = None
         
         if 'audio' in cond:
-            clap_sample_rate:int = self.clap_audio.model.model_cfg['audio_cfg']['sample_rate']
+            clap_sample_rate:int = self.clap.model.model_cfg['audio_cfg']['sample_rate']
             clap_audio = UtilAudio.resample_audio(cond['audio'], self.sample_rate, clap_sample_rate)
-            cond = {'global_embed': self.clap_audio(clap_audio)}
+            cond = {'global_embed': self.clap(clap_audio, type='audio')}
         elif 'text' in cond:
-            cond = {'global_embed': self.clap_text(cond['text'])}
+            cond = {'global_embed': self.clap(cond['text'], type='text')}
         additional_data_dict = None
         return z, cond, additional_data_dict
         
@@ -107,9 +75,9 @@ class InstDDPM(EDM):
                                     condition_device:Optional[torch.device] = None
                                     ) -> dict:
         batch_size:int = len(cond[list(cond.keys())[0]])
-        null_embed:Tensor = self.clap_text([''])
+        null_embed:Tensor = self.clap([''], type='text')
         return {'global_embed': null_embed.repeat(batch_size, 1)}
-
+    
 if __name__ == '__main__':
     from TorchJaekwon.Util import Util
     root_path:str = Util.get_ancestor_dir_path(__file__, 1)

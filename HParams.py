@@ -14,7 +14,12 @@ class Mode:
     
     config_path:str = f"./{CONFIG_DIR}/{config_name}.yaml"
 
-    stage:str = {0:"preprocess", 1:"train", 2:"inference", 3:"evaluate"}[1]
+    stage:str = {
+        0:"preprocess", 
+        1:"train", 
+        2:"inference", 
+        3:"evaluate"
+    }[1]
 
     train:str = ["start","resume"][0]
     resume_path:str = f"{LOG_DIR}/{config_name}"
@@ -23,7 +28,7 @@ class Mode:
 
 @dataclass
 class Resource:
-    device = torch.device('cuda:7' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     multi_gpu = False
     preprocess = {'num_workers': 20}
 
