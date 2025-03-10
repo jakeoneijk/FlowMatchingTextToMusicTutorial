@@ -7,8 +7,7 @@ from TorchJaekwon.Util import UtilData, UtilAudio
 from TorchJaekwon.Model.FlowMatching.FlowMatching import FlowMatching
 
 from Model.StableAudioOpen.AutoencoderPretransform import AutoencoderPretransform
-from Model.StableAudioOpen.CLAP.CLAPTextConditioner import CLAPTextConditioner
-from Model.StableAudioOpen.CLAP.CLAPAudioConditioner import CLAPAudioConditioner
+from Model.StableAudioOpen.CLAP.CLAPConditioner import CLAPConditioner
 
 class InstFlow(FlowMatching):
     def __init__(
@@ -29,18 +28,12 @@ class InstFlow(FlowMatching):
         autoencoder_ckpt = torch.load(autoencoder_ckpt_path, map_location='cpu')
         self.autoencoder.load_state_dict(autoencoder_ckpt)
         # CLAP
-        self.clap_text = CLAPTextConditioner(
-            output_dim=self.model.transformer.dim, 
-            clap_ckpt_path = clap_ckpt_path, 
-            use_text_features = False, 
-            feature_layer_ix = -2)
-        self.clap_audio = CLAPAudioConditioner( output_dim=self.model.transformer.dim, clap_ckpt_path = clap_ckpt_path)
+        self.clap = CLAPConditioner(output_dim=self.model.transformer.dim, clap_ckpt_path = clap_ckpt_path)
     
     def to(self, device:torch.device) -> None:
         super().to(device)
         self.autoencoder.to(device)
-        self.clap_text.model.to(device)
-        self.clap_audio.model.to(device)
+        self.clap.model.to(device)
         
     def preprocess(
         self,
@@ -55,11 +48,11 @@ class InstFlow(FlowMatching):
             z = None
         
         if 'audio' in cond:
-            clap_sample_rate:int = self.clap_audio.model.model_cfg['audio_cfg']['sample_rate']
+            clap_sample_rate:int = self.clap.model.model_cfg['audio_cfg']['sample_rate']
             clap_audio = UtilAudio.resample_audio(cond['audio'], self.sample_rate, clap_sample_rate)
-            cond = {'global_embed': self.clap_audio(clap_audio)}
+            cond = {'global_embed': self.clap(clap_audio, type='audio')}
         elif 'text' in cond:
-            cond = {'global_embed': self.clap_text(cond['text'])}
+            cond = {'global_embed': self.clap(cond['text'], type='text')}
         additional_data_dict = None
         return z, cond, additional_data_dict
         
@@ -82,7 +75,7 @@ class InstFlow(FlowMatching):
                                     condition_device:Optional[torch.device] = None
                                     ) -> dict:
         batch_size:int = len(cond[list(cond.keys())[0]])
-        null_embed:Tensor = self.clap_text([''])
+        null_embed:Tensor = self.clap([''], type='text')
         return {'global_embed': null_embed.repeat(batch_size, 1)}
 
 if __name__ == '__main__':

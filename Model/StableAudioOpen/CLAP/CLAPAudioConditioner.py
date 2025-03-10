@@ -59,7 +59,7 @@ class CLAPAudioConditioner(Conditioner):
         # Convert to mono
         mono_audios = audios.mean(dim=1)
 
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.amp.autocast(enabled=False):
             audio_embedding = self.model.get_audio_embedding_from_data(mono_audios.float(), use_tensor=True)
 
         # Cast audio embedding to same type as proj_out, unless proj_out is Identity
